@@ -1,12 +1,5 @@
 const express = require("express");
-const { getAllUsers, toggleFavorite, getFavorites, ChangePicture ,qualification } = require("../controllers/userController");
-const {
-  getAllUsers,
-  toggleFavorite,
-  getFavorites,
-  ChangePicture,
-  getWebData,
-} = require("../controllers/userController");
+const { getAllUsers, toggleFavorite, getFavorites, ChangePicture ,qualification, getWebData } = require("../controllers/userController");
 const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
