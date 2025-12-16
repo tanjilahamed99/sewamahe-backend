@@ -6,12 +6,12 @@ const sendEmail = async (to, subject, text) => {
         auth: {
             user: process.env.MAILER_USERNAME,
             pass: process.env.MAILER_PASSWORD,
-            type:"CUSTOM"
+            type: "Custom",
         },
     });
 
-     await transporter.sendMail({
-        from: `"Auth System" <${process.env.MAILER_FROM}>`,
+    await transporter.sendMail({
+        from: `"Reset Password" <${process.env.MAILER_FROM}>`,
         to,
         subject,
         text,

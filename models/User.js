@@ -3,19 +3,19 @@ const bcrypt = require("bcryptjs");
 const { Schema } = mongoose;
 
 const UserSchema = new Schema({
-    email: { type: String, required: true, unique: true },
+    email: String,
     firstName: String,
     lastName: String,
     username: String,
     fullName: String,
-    password: { type: String, required: true },
+    password: String,
     phone: String,
-    type: String,
+    type: { type: String, default: "user" },
     level: { type: String, default: "standard" },
     favorites: [{ type: Schema.ObjectId, ref: "rooms" }],
     tagLine: { type: String, default: "New Clover User" },
     picture: { type: Schema.ObjectId, ref: "images" },
-    lastOnline: Date,
+    lastOnline: { type: Date , default: Date.now },
     balance: {
         minute: { type: Number, default: 0 },
         amount: { type: Number, default: 0 },

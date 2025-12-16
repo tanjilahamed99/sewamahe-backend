@@ -1,9 +1,21 @@
 const express = require("express");
-const { getAllUsers } = require("../controllers/userController");
+const { getAllUsers, toggleFavorite, getFavorites, ChangePicture ,qualification } = require("../controllers/userController");
+const {
+  getAllUsers,
+  toggleFavorite,
+  getFavorites,
+  ChangePicture,
+  getWebData,
+} = require("../controllers/userController");
 const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-router.get("/",protect, getAllUsers);
+router.post("/", protect, getAllUsers);
+router.post("/favorites", protect, getFavorites);
+router.post("/toggleFavorite", protect, toggleFavorite);
+router.post("/changePicture", protect, ChangePicture);
+router.post("/qualification/set-price/:id", protect, qualification);
+router.get("/webData/get", getWebData);
 
 module.exports = router;

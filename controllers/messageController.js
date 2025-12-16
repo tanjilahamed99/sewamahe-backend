@@ -1,58 +1,103 @@
 const Message = require("../models/Message");
-const Conversation = require("../models/Conversation");
+const xss = require("xss");
+const Rooms = require("../models/Rooms");
+const store = require("../store");
+const { Types } = require("mongoose");
 
 // Send message
-exports.sendMessage = async (req, res) => {
-    try {
-        const { conversationId, content, type = "text" } = req.body;
-        const sender = req.user._id;
+exports.sendMessage = (req, res, next) => {
+  const { roomID, authorID, content, type, fileID } = req.body;
 
-        const message = await Message.create({
-            conversationId,
-            sender,
-            content,
-            type,
-        });
-
-        await Conversation.findByIdAndUpdate(conversationId, {
-            lastMessage: message._id,
-        });
-
-        res.json(message);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
-
-// Get messages with pagination
-exports.getMessages = async (req, res) => {
-    try {
-        const { skip = 0, limit = 20 } = req.query;
-        const messages = await Message.find({
-            conversationId: req.params.conversationId,
+  Message({
+    room: roomID,
+    author: authorID,
+    content: xss(content),
+    type,
+    file: fileID,
+  })
+    .save()
+    .then((message) => {
+      Message.findById(message._id)
+        .populate({
+          path: 'author',
+          select: '-email -password -friends -__v',
+          populate: [
+            {
+              path: 'picture',
+            },
+          ],
         })
-            .sort({ createdAt: -1 })
-            .skip(parseInt(skip))
-            .limit(parseInt(limit))
-            .populate("sender", "firstName lastName email avatar");
-
-        res.json(messages.reverse());
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+        .populate([{ path: 'file', strictPopulate: false }])
+        .then((message) => {
+          Rooms.findByIdAndUpdate(roomID, {
+            $set: { lastUpdate: message.date, lastMessage: message._id, lastAuthor: authorID },
+          })
+            .then((room) => {
+              room.people.forEach((person) => {
+                const personUserID = person.toString();
+                store.io.to(personUserID).emit('message-in', { status: 200, message, room });
+              });
+              res.status(200).json({ message, room });
+            })
+            .catch((err) => {
+              return res.status(500).json({ error: true });
+            });
+        })
+        .catch((err) => {
+          return res.status(500).json({ error: true });
+        });
+    })
+    .catch((err) => {
+      return res.status(500).json({ error: true });
+    });
 };
 
-// Mark message as seen
-exports.markMessageSeen = async (req, res) => {
-    try {
-        const message = await Message.findByIdAndUpdate(
-            req.params.id,
-            { $addToSet: { seenBy: req.user._id } },
-            { new: true }
-        );
+exports.getMoreMessages = async (req, res) => {
+    let { roomID, firstMessageID } = req.body;
 
-        res.json(message);
+    try {
+        const firstId = new Types.ObjectId(firstMessageID);
+
+        Message.find({
+            room: roomID,
+            _id: { $lt: firstId },
+        })
+            .sort({ _id: -1 })
+            .limit(20)
+            .populate({
+                path: "author",
+                strictPopulate: false,
+                select: "-email -password -friends -__v",
+                populate: {
+                    path: "picture",
+                },
+            })
+            .lean()
+            .then((messages) => {
+                messages.reverse();
+
+                res.status(200).json({
+                    messages: messages.map((e) => {
+                        if (e.author) {
+                            return e;
+                        } else {
+                            return {
+                                ...e,
+                                author: {
+                                    firstName: "Deleted",
+                                    lastName: "User",
+                                },
+                            };
+                        }
+                    }),
+                });
+            })
+            .catch((err) => {
+                console.error("Error loading old messages:", err);
+                res.status(500).json({ error: err.message });
+            });
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        console.error("Invalid ID:", err);
+        res.status(400).json({ error: "Invalid message ID" });
     }
 };

@@ -1,27 +1,16 @@
-// models/Message.js
 const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
-const messageSchema = new mongoose.Schema(
-    {
-        conversationId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Conversation",
-            required: true,
-        },
-        sender: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-        },
-        content: { type: String, required: true },
-        type: {
-            type: String,
-            enum: ["text", "image", "file", "call"],
-            default: "text",
-        },
-        seenBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+const MessageSchema = new Schema({
+    author: { type: Schema.ObjectId, ref: "User" },
+    content: String,
+    type: String,
+    file: { type: Schema.ObjectId, ref: "files" },
+    room: { type: Schema.ObjectId, ref: "rooms" },
+    date: {
+        type: Date,
+        default: Date.now,
     },
-    { timestamps: true }
-);
+});
 
-module.exports = mongoose.model("Message", messageSchema);
+module.exports = mongoose.model("messages", MessageSchema);
