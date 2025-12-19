@@ -9,8 +9,8 @@ const generateToken = (id) => {
 
 // Register
 exports.register = async (req, res) => {
-    try {
-        const { email, password, firstName, lastName } = req.body;
+  try {
+    const { email, password, firstName, lastName, type } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password required" });
@@ -22,13 +22,14 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-        const user = new User({
-            email,
-            password,
-            firstName,
-            lastName,
-            fullName: `${firstName || ""} ${lastName || ""}`.trim(),
-        });
+    const user = new User({
+      email,
+      password,
+      firstName,
+      lastName,
+      fullName: `${firstName || ""} ${lastName || ""}`.trim(),
+      type,
+    });
 
     await user.save();
     // remove password from output
