@@ -172,7 +172,7 @@ exports.topUp = async (req, res) => {
 
 exports.paygic = async (req, res) => {
     try {
-        const { amount, userId } = req.fields;
+        const { amount, userId } = req.body;
 
         const keys = await Paygic.findOne();
         const frontendUrl = process.env.FRONTEND_URL;

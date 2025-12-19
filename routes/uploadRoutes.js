@@ -18,6 +18,7 @@ const formParser = (req, res, next) => {
 router.post("/upload",protect, formParser, uploadImage);
 router.post("/uploadfile", protect, formParser, uploadFile);
 router.get("/image/:id", getImage);
+router.get("/image/:id/:size", getImage);
 router.get("/file/:id", getFile);
 
 module.exports = router;

@@ -10,7 +10,7 @@ router.post("/validate-payment", protect, razorpayPaymentValidate);
 router.post("/balance/top-up/:id", protect, topUp);
 
 // paygic
-router.post("/balance/top-up/paygic", protect, paygic);
+router.post("/top-up/paygic", protect, paygic);
 
 // Balance Withdraw Request
 router.post("/balance/withdrawal-request/:id", protect, withdrawRequest);
