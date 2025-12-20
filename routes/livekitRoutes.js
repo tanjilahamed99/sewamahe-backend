@@ -8,28 +8,31 @@ dotenv.config();
 
 router.post("/token", async (req, res) => {
     const { roomName, userId, calleeId } = req.body;
-    const user = await User.findById(userId).select("username");
     
-    const at = new AccessToken(
-        process.env.LIVEKIT_API_KEY,
-        process.env.LIVEKIT_API_SECRET,
-        {
-            identity: user.username,
-        }
-    );
-    at.addGrant({
-        roomJoin: true,
-        canPublish: true,
-        canSubscribe: true,
-        room: roomName,
-    });
-    const token = await at.toJwt();
-    if (userId !== calleeId) {
-        store.io.to(calleeId).emit("setCallToken", {
-            token,
-        });
+    console.log(req.body);
+
+  const user = await User.findById(userId).select("username");
+
+  const at = new AccessToken(
+    process.env.LIVEKIT_API_KEY,
+    process.env.LIVEKIT_API_SECRET,
+    {
+      identity: user.username,
     }
-    res.json({ token });
+  );
+  at.addGrant({
+    roomJoin: true,
+    canPublish: true,
+    canSubscribe: true,
+    room: roomName,
+  });
+  const token = await at.toJwt();
+  if (userId !== calleeId) {
+    store.io.to(calleeId).emit("setCallToken", {
+      token,
+    });
+  }
+  res.json({ token });
 });
 
 module.exports = router;
