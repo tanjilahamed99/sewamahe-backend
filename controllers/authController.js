@@ -10,10 +10,10 @@ const generateToken = (id) => {
 // Register
 exports.register = async (req, res) => {
   try {
-    const { email, password, firstName, lastName, type } = req.body;
+    const { email, password, firstName, lastName,username ,type } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password required" });
+    if (!email || !password || !username) {
+        return res.status(400).json({ message: "Email and password required" });
     }
 
     const existing = await User.findOne({ email });
@@ -27,6 +27,7 @@ exports.register = async (req, res) => {
       password,
       firstName,
       lastName,
+      username,
       fullName: `${firstName || ""} ${lastName || ""}`.trim(),
       type,
     });
