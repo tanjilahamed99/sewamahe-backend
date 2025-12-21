@@ -7,12 +7,9 @@ const store = require("../store");
 dotenv.config();
 
 router.post("/token", async (req, res) => {
-    const { roomName, userId, calleeId } = req.body;
-    
-    console.log(req.body);
-
+  const { roomName, userId, calleeId } = req.body;
   const user = await User.findById(userId).select("username");
-
+  
   const at = new AccessToken(
     process.env.LIVEKIT_API_KEY,
     process.env.LIVEKIT_API_SECRET,
