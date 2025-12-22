@@ -346,7 +346,6 @@ exports.updateCallBalance = async (req, res) => {
         transactionId,
         myBalance: parsedMyBalance,
         clientBalance: parsedClientBalance,
-        timestamp: transactionTime,
       }
     });
   } catch (error) {
