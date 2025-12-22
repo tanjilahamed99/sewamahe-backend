@@ -346,10 +346,88 @@ exports.updateCallBalance = async (req, res) => {
         transactionId,
         myBalance: parsedMyBalance,
         clientBalance: parsedClientBalance,
-      }
+      },
     });
   } catch (error) {
     console.error("Update call balance error:", error);
+    // Differentiate between server errors and validation errors
+    const errorMessage =
+      error.name === "ValidationError"
+        ? "Validation error: " + error.message
+        : "An internal server error occurred while processing your request";
+    return res.json({
+      message: errorMessage,
+      success: false,
+      ...(process.env.NODE_ENV === "development" && { error: error.message }),
+    });
+  }
+};
+
+exports.withdrawalRequest = async (req, res) => {
+  try {
+    const { withdrawalAmount, ...rest } = req.body;
+    const { id } = req.params;
+
+    const myData = await User.findById(id);
+    if (!myData) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (myData.balance.amount < withdrawalAmount) {
+      return res.status(400).json({
+        success: false,
+        message: "Insufficient balance for withdrawal",
+      });
+    }
+
+    // Prepare transaction history entry
+    const transactionId = `txn_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+
+    // Create transaction record
+    const transactionRecord = {
+      transactionId,
+      historyType: "withdrawal",
+      amount: withdrawalAmount,
+      status: "pending",
+      ...rest,
+      author: {
+        name: `${myData.firstName}${" "}${myData.lastName}`,
+        email: myData.email,
+        id,
+      },
+    };
+
+    // Update my account
+    const myUpdate = await User.findOneAndUpdate(
+      { _id: id },
+      {
+        $set: { balance: { amount: myData.balance.amount - withdrawalAmount } },
+        $push: {
+          history: {
+            $each: [
+              {
+                ...transactionRecord,
+              },
+            ],
+            $position: 0,
+          },
+        },
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.send({
+      message: "Withdrawal request submitted successfully",
+      success: true,
+      myUpdate,
+    });
+  } catch (error) {
+    console.error("withdrawal error:", error);
     // Differentiate between server errors and validation errors
     const errorMessage =
       error.name === "ValidationError"

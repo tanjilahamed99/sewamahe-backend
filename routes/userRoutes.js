@@ -7,6 +7,7 @@ const {
   qualification,
   getWebData,
   updateCallBalance,
+  withdrawalRequest,
 } = require("../controllers/userController");
 const { protect } = require("../middleware/authMiddleware");
 
@@ -18,6 +19,7 @@ router.post("/toggleFavorite", protect, toggleFavorite);
 router.post("/changePicture", protect, ChangePicture);
 router.post("/qualification/set-price/:id", protect, qualification);
 router.get("/webData/get", getWebData);
-router.put("/balance/update", updateCallBalance);
+router.put("/balance/update", protect, updateCallBalance);
+router.put("/balance/withdrawal-request/:id",withdrawalRequest);
 
 module.exports = router;
