@@ -55,6 +55,7 @@ app.use("/api/meeting", require("./routes/meetingRoutes"));
 app.use("/api/website", require("./routes/WebsiteRoutes"));
 app.use("/api/payment", require("./routes/paymentRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/contact", require("./routes/contactRoutes"));
 
 // Health check route
 app.get("/", (req, res) => {

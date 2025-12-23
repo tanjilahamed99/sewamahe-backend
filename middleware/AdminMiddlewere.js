@@ -24,7 +24,7 @@ exports.adminOnly = async (req, res, next) => {
             }
             
             // Check if user is admin
-            if (user.role !== "admin") {
+            if (user.type !== "admin") {
                 return res.status(403).json({ 
                     message: "Access denied. Admin privileges required" 
                 });
