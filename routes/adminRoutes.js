@@ -14,6 +14,8 @@ const {
   getSingleWithdrawal,
   updateWithdrawalStatus,
   allTransaction,
+  allContact,
+  deleteContact,
 } = require("../controllers/adminController");
 const { adminOnly } = require("../middleware/AdminMiddlewere");
 
@@ -37,5 +39,8 @@ router.put(
   updateWithdrawalStatus
 );
 router.get("/transactions/all/", adminOnly, allTransaction);
+
+router.get("/contact/get/all", adminOnly, allContact);
+router.delete("/contact/delete", adminOnly, deleteContact);
 
 module.exports = router;

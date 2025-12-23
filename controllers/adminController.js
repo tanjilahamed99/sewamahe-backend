@@ -1,3 +1,4 @@
+const Contact = require("../models/Contact");
 const Paygic = require("../models/Paygic");
 const Razorpay = require("../models/Razorpay");
 const User = require("../models/User");
@@ -429,6 +430,51 @@ exports.allTransaction = async (req, res) => {
       message: "All user history retrieved successfully.",
       success: true,
       data: allHistory,
+    });
+  } catch (error) {
+    console.log(error);
+    res.send({
+      message: "An error occurred while processing your request.",
+      success: false,
+    });
+  }
+};
+
+exports.allContact = async (req, res) => {
+  try {
+    const contact = await Contact.find({});
+    if (!contact) {
+      return res.send({
+        message: "No contact found.",
+      });
+    }
+    res.send({
+      message: "All contact retrieved successfully.",
+      success: true,
+      data: contact,
+    });
+  } catch (error) {
+    console.log(error);
+    res.send({
+      message: "An error occurred while processing your request.",
+      success: false,
+    });
+  }
+};
+
+exports.deleteContact = async (req, res) => {
+  try {
+    const { contactId } = req.body;
+    const contact = await Contact.findByIdAndDelete(contactId);
+    if (!contact) {
+      return res.send({
+        message: "Contact not found.",
+        success: false,
+      });
+    }
+    res.send({
+      message: "Contact deleted successfully.",
+      success: true,
     });
   } catch (error) {
     console.log(error);
