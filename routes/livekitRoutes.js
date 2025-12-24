@@ -12,13 +12,15 @@ router.post("/token", async (req, res) => {
   const user = await User.findById(userId).select("username");
   const liveKit = await LiveKit.findOne();
 
-  const at = new AccessToken(
-    liveKit.key || process.env.LIVEKIT_API_KEY,
-    liveKit.key || process.env.LIVEKIT_API_SECRET,
-    {
-      identity: user.username,
-    }
-  );
+  if (!liveKit) {
+    return res.send({
+      message: "liveKit credentials not set",
+    });
+  }
+
+  const at = new AccessToken(liveKit.key, liveKit.secret, {
+    identity: user.username,
+  });
   at.addGrant({
     roomJoin: true,
     canPublish: true,
