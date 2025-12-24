@@ -1,4 +1,5 @@
 const Contact = require("../models/Contact");
+const LiveKit = require("../models/LiveKit");
 const Paygic = require("../models/Paygic");
 const Razorpay = require("../models/Razorpay");
 const User = require("../models/User");
@@ -66,6 +67,50 @@ exports.setPaygic = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error updating website settings", success: false });
+  }
+};
+
+exports.setLiveKit = async (req, res) => {
+  try {
+    const updatedData = req.body;
+    let settings = await LiveKit.findOne();
+    if (!settings) {
+      // If no document exists yet, create it
+      settings = new LiveKit(updatedData);
+    } else {
+      // Update existing document
+      Object.assign(settings, updatedData);
+    }
+
+    await settings.save();
+    res.json({
+      success: true,
+      message: "Website settings updated",
+      data: settings,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Error updating website settings", success: false });
+  }
+};
+
+exports.getLiveKitData = async (req, res) => {
+  try {
+    const settings = await LiveKit.findOne(); // Only one document expected
+    if (!settings) {
+      return res
+        .status(404)
+        .json({ message: "Website settings not found", success: false });
+    }
+
+    return res.json({ success: true, data: settings });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Error fetching website settings", success: false });
   }
 };
 
