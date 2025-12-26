@@ -28,16 +28,33 @@ exports.deleteUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { userId, ...updateData } = req.body;
-    console.log(userId);
-    const user = await User.findByIdAndUpdate(userId, updateData, {
-      new: true,
-    });
+
+    // Find the user first
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Check if password is being updated
+    if (updateData.password) {
+      // Set the password (it will be hashed in pre-save middleware)
+      user.password = updateData.password;
+      delete updateData.password; // Remove from updateData to avoid duplication
+    }
+
+    // Update other fields
+    Object.assign(user, updateData);
+
+    // Save the user
+    await user.save();
+    
+    // Convert to plain object and remove password
+    const userObject = user.toObject();
+    delete userObject.password;
+    
     res.json({
       message: "User updated successfully",
       status: 200,
       success: true,
-      user,
+      user: userObject,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
