@@ -250,7 +250,7 @@ exports.creditUser = async (req, res) => {
           historyType: "Admin Credit",
           amount: credit,
           paymentMethod: "Credit",
-          status: "Completed",
+          status: "completed",
           author: {
             name: `${findUser.firstName}${" "}${findUser.lastName}`,
             email: findUser.email,
@@ -264,7 +264,7 @@ exports.creditUser = async (req, res) => {
           historyType: "Admin Credit",
           amount: credit,
           paymentMethod: "Credit",
-          status: "Completed",
+          status: "completed",
           author: {
             name: `${findUser.firstName}${" "}${findUser.lastName}`,
             email: findUser.email,
