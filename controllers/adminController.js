@@ -45,11 +45,11 @@ exports.updateUser = async (req, res) => {
 
     // Save the user
     await user.save();
-    
+
     // Convert to plain object and remove password
     const userObject = user.toObject();
     delete userObject.password;
-    
+
     res.json({
       message: "User updated successfully",
       status: 200,
@@ -222,7 +222,6 @@ exports.getRazorpayData = async (req, res) => {
 exports.creditUser = async (req, res) => {
   try {
     const { userId, userEmail, credit } = req.body;
-    console.log(userId, userEmail, credit);
 
     if (!userId || !userEmail || !credit) {
       return res.send({
@@ -242,58 +241,50 @@ exports.creditUser = async (req, res) => {
       });
     }
 
-    let history = [];
-    if (findUser.history.length > 0) {
-      history = [
-        ...findUser.history,
-        {
-          historyType: "Admin Credit",
-          amount: credit,
-          paymentMethod: "Credit",
-          status: "completed",
-          author: {
-            name: `${findUser.firstName}${" "}${findUser.lastName}`,
-            email: findUser.email,
-            id: findUser.id,
-          },
-        },
-      ];
-    } else {
-      history = [
-        {
-          historyType: "Admin Credit",
-          amount: credit,
-          paymentMethod: "Credit",
-          status: "completed",
-          author: {
-            name: `${findUser.firstName}${" "}${findUser.lastName}`,
-            email: findUser.email,
-            id: findUser.id,
-          },
-        },
-      ];
-    }
+    // new code     // Prepare transaction history entry
+    const transactionId = `txn_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
 
-    const update = {
-      $set: {
-        "balance.amount": findUser.balance.amount + parseInt(credit),
-        history,
+    // Create transaction record
+    const transactionRecord = {
+      transactionId,
+      author: {
+        name: `${findUser.firstName}${" "}${findUser.lastName}`,
+        email: findUser.email,
+        id: userId,
       },
+      historyType: "Admin Credit",
+      amount: credit,
+      paymentMethod: "Credit",
+      status: "completed",
     };
 
-    const updatedUser = await User.findByIdAndUpdate(userId, update, {
-      new: true,
-    });
-    if (!updatedUser) {
-      return res.send({
-        message: "Failed to update user balance.",
-        success: false,
-      });
-    }
+    // Update my account
+    const updateUserData = await User.findOneAndUpdate(
+      { _id: userId },
+      {
+        $set: {
+          balance: { amount: findUser.balance.amount + parseInt(credit) },
+        },
+        $push: {
+          history: {
+            $each: [
+              {
+                ...transactionRecord,
+              },
+            ],
+            $position: 0,
+          },
+        },
+      },
+      { new: true, runValidators: true }
+    );
+
     res.send({
       message: "User balance updated successfully.",
       success: true,
-      data: updatedUser,
+      data: updateUserData,
     });
   } catch (error) {
     console.log(error);
