@@ -332,61 +332,13 @@ exports.paygicPaymentValidate = async (req, res) => {
       paygicReferenceId: paymentStatus?.data?.paygicReferenceId,
     };
 
-    // let updateHistory = [];
-    // if (findUser.history.length > 0) {
-    //   updateHistory = [
-    //     ...findUser.history,
-    //     {
-    //       paygic,
-    //       amount: paymentStatus.data.amount,
-    //       paymentMethod: "Paygic",
-    //       historyType: "top-up",
-    //       status: "Completed",
-    //       author: {
-    //         name: `${findUser.firstName}${" "}${findUser.lastName}`,
-    //         email: findUser.email,
-    //         id: findUser.id,
-    //       },
-    //     },
-    //   ];
-    // } else {
-    //   updateHistory = [
-    //     {
-    //       paygic,
-    //       amount: paymentStatus.data.amount,
-    //       paymentMethod: "Paygic",
-    //       historyType: "top-up",
-    //       status: "Completed",
-    //       author: {
-    //         name: `${findUser.firstName}${" "}${findUser.lastName}`,
-    //         email: findUser.email,
-    //         id: findUser.id,
-    //       },
-    //     },
-    //   ];
-    // }
-    // const update = {
-    //   $set: {
-    //     balance: {
-    //       amount:
-    //         findUser.balance.amount + parseFloat(paymentStatus.data.amount),
-    //     },
-    //     history: updateHistory,
-    //   },
-    // };
-    // const updateUserData = await User.findOneAndUpdate(
-    //   { _id: userId },
-    //   update,
-    //   { new: true }
-    //   );
-
     // Create transaction record
     const transactionRecord = {
       paygic,
       amount: paymentStatus.data.amount,
       paymentMethod: "Paygic",
       historyType: "top-up",
-      status: "Completed",
+      status: "completed",
       author: {
         name: `${findUser.firstName}${" "}${findUser.lastName}`,
         email: findUser.email,
