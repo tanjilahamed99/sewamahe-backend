@@ -15,6 +15,22 @@ const app = express();
 
 const server = http.createServer(app);
 
+require("dotenv").config();
+
+const admin = require("firebase-admin");
+var serviceAccount = require("./utils/serviceAccountKey.json");
+const { pushNotification } = require("./utils/sendPushNotification");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+admin
+  .auth()
+  .listUsers(1)
+  .then(() => console.log("Firebase Admin connected ✅"))
+  .catch(console.err);
+
 // ✅ Initialize Socket.IO properly
 const io = new Server(server, {
   cors: {
@@ -56,6 +72,11 @@ app.use("/api/website", require("./routes/WebsiteRoutes"));
 app.use("/api/payment", require("./routes/paymentRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/contact", require("./routes/contactRoutes"));
+
+// app.post("/notification", async (req, res) => {
+//   await pushNotification()
+//   res.send({ success: true });
+// });
 
 // Health check route
 app.get("/", (req, res) => {

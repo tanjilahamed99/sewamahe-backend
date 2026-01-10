@@ -67,6 +67,10 @@ exports.callMeeting = async (req, res) => {
                     caller: user,
                     callee : person,
                 });
+
+
+                // push notification setup for user
+                
             }
         });
 

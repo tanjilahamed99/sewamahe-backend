@@ -45,6 +45,10 @@ const UserSchema = new Schema({
   qualification: String,
   consultantStatus: { type: String, default: "Pending" },
   createdAt: { type: Date, default: Date.now },
+  fcmToken: {
+    type: String,
+    default: "",
+  },
 
   // 🔑 Reset password fields
   resetPasswordOTP: String,
