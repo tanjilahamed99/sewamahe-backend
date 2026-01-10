@@ -2,7 +2,6 @@ const admin = require("firebase-admin");
 
 module.exports.pushNotification = async (data = {}) => {
   const { title, token, body, type, callerName, callId, roomId } = data;
-  console.log(data);
   if (!token) {
     return;
   }
