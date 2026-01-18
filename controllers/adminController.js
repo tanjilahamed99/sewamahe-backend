@@ -1,3 +1,5 @@
+const Contact = require("../models/Contact");
+const LiveKit = require("../models/LiveKit");
 const Paygic = require("../models/Paygic");
 const Razorpay = require("../models/Razorpay");
 const User = require("../models/User");
@@ -26,16 +28,33 @@ exports.deleteUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { userId, ...updateData } = req.body;
-    console.log(userId);
-    const user = await User.findByIdAndUpdate(userId, updateData, {
-      new: true,
-    });
+
+    // Find the user first
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Check if password is being updated
+    if (updateData.password) {
+      // Set the password (it will be hashed in pre-save middleware)
+      user.password = updateData.password;
+      delete updateData.password; // Remove from updateData to avoid duplication
+    }
+
+    // Update other fields
+    Object.assign(user, updateData);
+
+    // Save the user
+    await user.save();
+
+    // Convert to plain object and remove password
+    const userObject = user.toObject();
+    delete userObject.password;
+
     res.json({
       message: "User updated successfully",
       status: 200,
       success: true,
-      user,
+      user: userObject,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -65,6 +84,50 @@ exports.setPaygic = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error updating website settings", success: false });
+  }
+};
+
+exports.setLiveKit = async (req, res) => {
+  try {
+    const updatedData = req.body;
+    let settings = await LiveKit.findOne();
+    if (!settings) {
+      // If no document exists yet, create it
+      settings = new LiveKit(updatedData);
+    } else {
+      // Update existing document
+      Object.assign(settings, updatedData);
+    }
+
+    await settings.save();
+    res.json({
+      success: true,
+      message: "Website settings updated",
+      data: settings,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Error updating website settings", success: false });
+  }
+};
+
+exports.getLiveKitData = async (req, res) => {
+  try {
+    const settings = await LiveKit.findOne(); // Only one document expected
+    if (!settings) {
+      return res
+        .status(404)
+        .json({ message: "Website settings not found", success: false });
+    }
+
+    return res.json({ success: true, data: settings });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Error fetching website settings", success: false });
   }
 };
 
@@ -159,7 +222,6 @@ exports.getRazorpayData = async (req, res) => {
 exports.creditUser = async (req, res) => {
   try {
     const { userId, userEmail, credit } = req.body;
-    console.log(userId, userEmail, credit);
 
     if (!userId || !userEmail || !credit) {
       return res.send({
@@ -179,58 +241,50 @@ exports.creditUser = async (req, res) => {
       });
     }
 
-    let history = [];
-    if (findUser.history.length > 0) {
-      history = [
-        ...findUser.history,
-        {
-          historyType: "Admin Credit",
-          amount: credit,
-          paymentMethod: "Credit",
-          status: "Completed",
-          author: {
-            name: `${findUser.firstName}${" "}${findUser.lastName}`,
-            email: findUser.email,
-            id: findUser.id,
-          },
-        },
-      ];
-    } else {
-      history = [
-        {
-          historyType: "Admin Credit",
-          amount: credit,
-          paymentMethod: "Credit",
-          status: "Completed",
-          author: {
-            name: `${findUser.firstName}${" "}${findUser.lastName}`,
-            email: findUser.email,
-            id: findUser.id,
-          },
-        },
-      ];
-    }
+    // new code     // Prepare transaction history entry
+    const transactionId = `txn_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
 
-    const update = {
-      $set: {
-        "balance.amount": findUser.balance.amount + parseInt(credit),
-        history,
+    // Create transaction record
+    const transactionRecord = {
+      transactionId,
+      author: {
+        name: `${findUser.firstName}${" "}${findUser.lastName}`,
+        email: findUser.email,
+        id: userId,
       },
+      historyType: "Admin Credit",
+      amount: credit,
+      paymentMethod: "Credit",
+      status: "completed",
     };
 
-    const updatedUser = await User.findByIdAndUpdate(userId, update, {
-      new: true,
-    });
-    if (!updatedUser) {
-      return res.send({
-        message: "Failed to update user balance.",
-        success: false,
-      });
-    }
+    // Update my account
+    const updateUserData = await User.findOneAndUpdate(
+      { _id: userId },
+      {
+        $set: {
+          balance: { amount: findUser.balance.amount + parseInt(credit) },
+        },
+        $push: {
+          history: {
+            $each: [
+              {
+                ...transactionRecord,
+              },
+            ],
+            $position: 0,
+          },
+        },
+      },
+      { new: true, runValidators: true }
+    );
+
     res.send({
       message: "User balance updated successfully.",
       success: true,
-      data: updatedUser,
+      data: updateUserData,
     });
   } catch (error) {
     console.log(error);
@@ -429,6 +483,51 @@ exports.allTransaction = async (req, res) => {
       message: "All user history retrieved successfully.",
       success: true,
       data: allHistory,
+    });
+  } catch (error) {
+    console.log(error);
+    res.send({
+      message: "An error occurred while processing your request.",
+      success: false,
+    });
+  }
+};
+
+exports.allContact = async (req, res) => {
+  try {
+    const contact = await Contact.find({});
+    if (!contact) {
+      return res.send({
+        message: "No contact found.",
+      });
+    }
+    res.send({
+      message: "All contact retrieved successfully.",
+      success: true,
+      data: contact,
+    });
+  } catch (error) {
+    console.log(error);
+    res.send({
+      message: "An error occurred while processing your request.",
+      success: false,
+    });
+  }
+};
+
+exports.deleteContact = async (req, res) => {
+  try {
+    const { contactId } = req.body;
+    const contact = await Contact.findByIdAndDelete(contactId);
+    if (!contact) {
+      return res.send({
+        message: "Contact not found.",
+        success: false,
+      });
+    }
+    res.send({
+      message: "Contact deleted successfully.",
+      success: true,
     });
   } catch (error) {
     console.log(error);

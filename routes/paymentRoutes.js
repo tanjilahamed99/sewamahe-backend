@@ -1,6 +1,6 @@
 const express = require("express");
 const { protect } = require("../middleware/authMiddleware");
-const { razorpay , createPaymentIntent, razorpayPaymentValidate, topUp, paygic, withdrawRequest} = require("../controllers/paymentController");
+const { razorpay , createPaymentIntent, razorpayPaymentValidate, topUp, paygic, withdrawRequest, paygicPaymentValidate} = require("../controllers/paymentController");
 
 const router = express.Router();
 // razorpay
@@ -11,6 +11,7 @@ router.post("/balance/top-up/:id", protect, topUp);
 
 // paygic
 router.post("/top-up/paygic", protect, paygic);
+router.post("/paygic/validate-payment", paygicPaymentValidate);
 
 // Balance Withdraw Request
 router.post("/balance/withdrawal-request/:id", protect, withdrawRequest);

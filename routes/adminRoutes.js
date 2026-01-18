@@ -14,34 +14,37 @@ const {
   getSingleWithdrawal,
   updateWithdrawalStatus,
   allTransaction,
+  allContact,
+  deleteContact,
+  setLiveKit,
+  getLiveKitData,
 } = require("../controllers/adminController");
 const { adminOnly } = require("../middleware/AdminMiddlewere");
 
 const router = express.Router();
 
-// router.get("/admin/users/all", adminOnly, getAllUsers);
-router.get("/users/all", getAllUsers);
-router.put("/user/update", updateUser);
-router.delete("/user", deleteUser);
-router.post("/paygic/set", setPaygic);
-router.post("/razorpay/set", setRazorpay);
-router.put("/website/set", setWebData);
-router.get("/paygic/get", getPayGicData);
-router.get("/razorpay/get", getRazorpayData);
-router.post("/credit", creditUser);
-router.post("/consultant-status-update", consultantStatusUpdate);
-router.get("/withdrawals/all", allWithdrawalRequest);
-router.get("/withdrawals/single/:withdrawalId", getSingleWithdrawal);
-router.put("/withdrawal/update/:withdrawalId", updateWithdrawalStatus);
-router.get("/transactions/all/", allTransaction);
+router.get("/users/all", adminOnly, getAllUsers);
+router.put("/user/update", adminOnly, updateUser);
+router.delete("/user", adminOnly, deleteUser);
+router.post("/paygic/set", adminOnly, setPaygic);
+router.post("/liveKit/set", adminOnly, setLiveKit);
+router.get("/liveKit/get", adminOnly, getLiveKitData);
+router.post("/razorpay/set", adminOnly, setRazorpay);
+router.put("/website/set", adminOnly, setWebData);
+router.get("/paygic/get", adminOnly, getPayGicData);
+router.get("/razorpay/get", adminOnly, getRazorpayData);
+router.post("/credit", adminOnly, creditUser);
+router.post("/consultant-status-update", adminOnly, consultantStatusUpdate);
+router.get("/withdrawals/all", adminOnly, allWithdrawalRequest);
+router.get("/withdrawals/single/:withdrawalId", adminOnly, getSingleWithdrawal);
+router.put(
+  "/withdrawal/update/:withdrawalId",
+  adminOnly,
+  updateWithdrawalStatus
+);
+router.get("/transactions/all/", adminOnly, allTransaction);
 
-// router.get('/admin/contact/all/:id/:email', adminOnly, require('./getAllContact'));
-// router.put('/admin/paygic/set/:id/:email', adminOnly, require('./setPaygic'));
-// router.put('/admin/razorpay/set/:id/:email', adminOnly, require('./setRazorpay'));
-// router.post('/admin/credit/:id/:email', adminOnly, require('./credit'));
-// router.get('/admin/withdrawal/all/:id/:email', adminOnly, require('./all-withdrawal-request'));
-// router.get('/admin/withdrawal/single/:id/:email/:withdrawalId', adminOnly, require('./getSingleWithdrawalData'));
-// router.post('/admin/withdrawal/update/:id/:email/:withdrawalId', adminOnly, require('./approvedWithdrawal'));
-// router.post('/admin/withdrawal/send/:id/:email/:withdrawalId', adminOnly, require('./sendPayment'));
+router.get("/contact/get/all", adminOnly, allContact);
+router.delete("/contact/delete", adminOnly, deleteContact);
 
 module.exports = router;

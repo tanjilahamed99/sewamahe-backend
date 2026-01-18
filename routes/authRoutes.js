@@ -1,5 +1,13 @@
 const express = require("express");
-const { register, login, getProfile, forgotPassword, resetPassword, changePassword } = require("../controllers/authController");
+const {
+  register,
+  login,
+  getProfile,
+  forgotPassword,
+  resetPassword,
+  changePassword,
+  saveFcmToken,
+} = require("../controllers/authController");
 const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -10,5 +18,6 @@ router.get("/profile", protect, getProfile);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.post("/change-password", changePassword);
+router.post("/save-fcm-token", protect,saveFcmToken);
 
 module.exports = router;
