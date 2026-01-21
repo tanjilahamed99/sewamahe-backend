@@ -5,6 +5,7 @@ module.exports.pushNotification = async (data = {}) => {
   if (!token) {
     return;
   }
+
   const message = {
     token,
     data: {
