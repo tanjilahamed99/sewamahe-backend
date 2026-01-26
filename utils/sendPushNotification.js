@@ -22,7 +22,7 @@ module.exports.pushNotification = async (data = {}) => {
         requireInteraction: true,
         actions: [
           { action: "accept", title: "Accept" },
-          { action: "reject", title: "Reject" },
+          // { action: "reject", title: "Reject" },
         ],
       },
     },
