@@ -49,11 +49,7 @@ exports.sendMessage = (req, res, next) => {
                   const authorData = await User.findById(authorID);
                   if (userData.fcmToken) {
                     pushNotification({
-                      title:
-                        authorData.firstName +
-                        " " +
-                        authorData.lastName +
-                        " send a message",
+                      title: "Message",
                       token: userData.fcmToken,
                       body:
                         authorData.firstName +
@@ -65,7 +61,6 @@ exports.sendMessage = (req, res, next) => {
                         authorData.firstName + " " + authorData.lastName,
                       callId: authorID,
                       roomId: roomID,
-                      
                     });
                   }
                 }
