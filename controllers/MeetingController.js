@@ -66,27 +66,35 @@ exports.callMeeting = async (req, res) => {
           caller: user,
           callee: person,
         });
-        
-        // push notification setup for user
+
+        // push notification setup for 
         const notifyUser = await User.findById(personUserID);
         const senderData = await User.findById(myUserID);
         if (notifyUser.fcmToken) {
           pushNotification({
-            title:
-              senderData.firstName +
-              " " +
-              senderData.lastName +
-              " is calling you",
+            title: `${senderData.firstName} ${senderData.lastName} is calling you`,
             token: notifyUser.fcmToken,
-            body:
-              senderData.firstName +
-              " " +
-              senderData.lastName +
-              " is calling you",
+            body: `${senderData.firstName} ${senderData.lastName} is calling you`,
             type: "call",
-            callerName: senderData.firstName + " " + senderData.lastName,
-            callId: myUserID,
-            roomId: roomID,
+            meetingID: meetingID.toString(),
+            roomID: roomID.toString(),
+            status: "200",
+            caller: {
+              _id: user._id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              avatar: user.avatar || "",
+              phone: user.phone || "",
+              email: user.email || "",
+            },
+            callee: {
+              _id: person._id,
+              firstName: person.firstName,
+              lastName: person.lastName,
+              avatar: person.avatar || "",
+              phone: person.phone || "",
+              email: person.email || "",
+            },
           });
         }
       }
