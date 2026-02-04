@@ -67,7 +67,7 @@ exports.callMeeting = async (req, res) => {
           callee: person,
         });
 
-        // push notification setup for 
+        // push notification setup for user 
         const notifyUser = await User.findById(personUserID);
         const senderData = await User.findById(myUserID);
         if (notifyUser.fcmToken) {
