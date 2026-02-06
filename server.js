@@ -19,7 +19,6 @@ require("dotenv").config();
 
 const admin = require("firebase-admin");
 var serviceAccount = require("./utils/serviceAccountKey.json");
-const { pushNotification } = require("./utils/sendPushNotification");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -34,7 +33,11 @@ admin
 // ✅ Initialize Socket.IO properly
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:8080", process.env.FRONTEND_URL],
+    origin: [
+      "http://localhost:8080",
+      "https://sawamahe-frontend.vercel.app",
+      "http://localhost:4173",
+    ],
     credentials: true,
   },
 });
@@ -51,9 +54,13 @@ try {
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:8080", process.env.FRONTEND_URL],
+    origin: [
+      "http://localhost:8080",
+      "https://sawamahe-frontend.vercel.app",
+      "http://localhost:4173",
+    ],
     credentials: true,
-  })
+  }),
 );
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
