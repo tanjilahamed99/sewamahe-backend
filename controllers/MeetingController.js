@@ -41,11 +41,13 @@ exports.callMeeting = async (req, res) => {
     }
 
     // Fetch the room with participants
-    const room = await Room.findById(roomID).populate({
-      path: "people",
-      select: "-email -password -friends -__v",
-      populate: { path: "picture" },
-    });
+    const room = await Room.findById(roomID)
+      .populate({
+        path: "people",
+        select: "-email -password -friends -__v",
+        populate: { path: "picture" },
+      })
+      .lean();
 
     if (!room) {
       return res.status(404).json({ error: "Room not found" });
@@ -67,34 +69,75 @@ exports.callMeeting = async (req, res) => {
           callee: person,
         });
 
-        // push notification setup for user 
+        // push notification setup for user
         const notifyUser = await User.findById(personUserID);
         const senderData = await User.findById(myUserID);
+
+        const { people, ...rest } = room;
+
+        const cleanedPeople = people.map(
+          ({
+            history,
+            fullName,
+            favorites,
+            tagLine,
+            balance,
+            consultantStatus,
+            createdAt,
+            ...rest
+          }) => rest,
+        );
+
+        const miniNotifyData = {
+          _id: notifyUser._id,
+          firstName: notifyUser.firstName,
+          lastName: notifyUser.lastName,
+          email: notifyUser.email,
+          balance: notifyUser.balance,
+          picture: notifyUser.picture,
+          fcmToken: notifyUser.fcmToken,
+          username: notifyUser.username,
+          type: notifyUser.type,
+          price: notifyUser.price,
+          qualification: notifyUser.qualification,
+          consultantStatus: notifyUser.consultantStatus,
+        };
+        const miniSenderData = {
+          _id: senderData._id,
+          firstName: senderData.firstName,
+          lastName: senderData.lastName,
+          email: senderData.email,
+          balance: senderData.balance,
+          picture: senderData.picture,
+          fcmToken: senderData.fcmToken,
+          username: senderData.username,
+          type: senderData.type,
+          price: senderData.price,
+          qualification: senderData.qualification,
+          consultantStatus: senderData.consultantStatus,
+        };
+
         if (notifyUser.fcmToken) {
           pushNotification({
-            title: `${senderData.firstName} ${senderData.lastName} is calling you`,
+            title:
+              senderData.firstName +
+              " " +
+              senderData.lastName +
+              " is calling you",
             token: notifyUser.fcmToken,
-            body: `${senderData.firstName} ${senderData.lastName} is calling you`,
+            body:
+              senderData.firstName +
+              " " +
+              senderData.lastName +
+              " is calling you",
             type: "call",
-            meetingID: meetingID.toString(),
-            roomID: roomID.toString(),
             status: "200",
-            caller: {
-              _id: user._id,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              avatar: user.avatar || "",
-              phone: user.phone || "",
-              email: user.email || "",
-            },
-            callee: {
-              _id: person._id,
-              firstName: person.firstName,
-              lastName: person.lastName,
-              avatar: person.avatar || "",
-              phone: person.phone || "",
-              email: person.email || "",
-            },
+            room: JSON.stringify({ ...rest, people: cleanedPeople }),
+            meetingID,
+            roomID,
+            type,
+            caller: JSON.stringify(miniSenderData),
+            callee: JSON.stringify(miniNotifyData),
           });
         }
       }
