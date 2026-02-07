@@ -135,7 +135,6 @@ exports.callMeeting = async (req, res) => {
             room: JSON.stringify({ ...rest, people: cleanedPeople }),
             meetingID,
             roomID,
-            type,
             caller: JSON.stringify(miniSenderData),
             callee: JSON.stringify(miniNotifyData),
           });
