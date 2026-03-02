@@ -50,7 +50,7 @@ const io = new Server(server, {
     origin: [
       "http://localhost:8080",
       "https://sawamahe-frontend.vercel.app",
-      "http://localhost:4173",
+      "http://localhost:5173",
     ],
     credentials: true,
   },
@@ -71,7 +71,7 @@ app.use(
     origin: [
       "http://localhost:8080",
       "https://sawamahe-frontend.vercel.app",
-      "http://localhost:4173",
+      "http://localhost:5173",
     ],
     credentials: true,
   }),
