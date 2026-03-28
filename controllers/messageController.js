@@ -50,13 +50,7 @@ exports.sendMessage = (req, res, next) => {
                   const authorData = await User.findById(authorID);
                   if (userData.fcmToken) {
                     pushNotification({
-                      title: "Message",
                       token: userData.fcmToken,
-                      body:
-                        authorData.firstName +
-                        " " +
-                        authorData.lastName +
-                        " send a message",
                       type: "message",
                       callerName:
                         authorData.firstName + " " + authorData.lastName,
