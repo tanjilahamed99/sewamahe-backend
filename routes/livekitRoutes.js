@@ -9,6 +9,7 @@ dotenv.config();
 
 router.post("/token", async (req, res) => {
   const { roomName, userId, calleeId } = req.body;
+
   const user = await User.findById(userId).select("username");
   const liveKit = await LiveKit.findOne();
 
@@ -18,22 +19,35 @@ router.post("/token", async (req, res) => {
     });
   }
 
-  const at = new AccessToken(liveKit.key, liveKit.secret, {
-    identity: user.username,
+  const callerToken = new AccessToken(liveKit.key, liveKit.secret, {
+    identity: userId,
+    name: user.username,
   });
-  at.addGrant({
+
+  callerToken.addGrant({
     roomJoin: true,
     canPublish: true,
     canSubscribe: true,
     room: roomName,
   });
-  const token = await at.toJwt();
+
+  const calleeToken = new AccessToken(liveKit.key, liveKit.secret, {
+    identity: calleeId,
+  });
+
+  calleeToken.addGrant({
+    roomJoin: true,
+    canPublish: true,
+    canSubscribe: true,
+    room: roomName,
+  });
+
   if (userId !== calleeId) {
     store.io.to(calleeId).emit("setCallToken", {
-      token,
+      token: await calleeToken.toJwt(),
     });
   }
-  res.json({ token });
-});
 
+  res.json({ token: await callerToken.toJwt() });
+});
 module.exports = router;

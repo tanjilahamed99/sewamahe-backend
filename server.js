@@ -10,7 +10,7 @@ Config = require("./config");
 const path = require("path");
 dotenv.config();
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5005;
 const app = express();
 
 const server = http.createServer(app);
@@ -18,9 +18,7 @@ const server = http.createServer(app);
 require("dotenv").config();
 
 const admin = require("firebase-admin");
-
-
-console.log()
+var serviceAccount = require("./utils/serviceAccountKey.json");
 
 admin.initializeApp({
   credential: admin.credential.cert({
@@ -48,9 +46,10 @@ admin
 const io = new Server(server, {
   cors: {
     origin: [
-      "http://localhost:8080",
-      "https://sawamahe-frontend.vercel.app",
+      "https://sewamahe.in",
       "http://localhost:5173",
+      "https://sawamahe-frontend.vercel.app",
+      "http://localhost:4173",
     ],
     credentials: true,
   },
@@ -69,9 +68,10 @@ app.use(express.json());
 app.use(
   cors({
     origin: [
-      "http://localhost:8080",
-      "https://sawamahe-frontend.vercel.app",
+      "https://sewamahe.in",
       "http://localhost:5173",
+      "https://sawamahe-frontend.vercel.app",
+      "http://localhost:4173",
     ],
     credentials: true,
   }),
@@ -100,7 +100,7 @@ app.get("/", (req, res) => {
 });
 
 // Error handling middleware
-app.use((err, req, res) => {
+app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: "Something broke!" });
 });

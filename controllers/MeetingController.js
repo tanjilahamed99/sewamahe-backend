@@ -41,13 +41,11 @@ exports.callMeeting = async (req, res) => {
     }
 
     // Fetch the room with participants
-    const room = await Room.findById(roomID)
-      .populate({
-        path: "people",
-        select: "-email -password -friends -__v",
-        populate: { path: "picture" },
-      })
-      .lean();
+    const room = await Room.findById(roomID).populate({
+      path: "people",
+      select: "-email -password -friends -__v",
+      populate: { path: "picture" },
+    });
 
     if (!room) {
       return res.status(404).json({ error: "Room not found" });
@@ -72,21 +70,20 @@ exports.callMeeting = async (req, res) => {
         // push notification setup for user
         const notifyUser = await User.findById(personUserID);
         const senderData = await User.findById(myUserID);
-
-        const { people, ...rest } = room;
-
-        const cleanedPeople = people.map(
-          ({
-            history,
-            fullName,
-            favorites,
-            tagLine,
-            balance,
-            consultantStatus,
-            createdAt,
-            ...rest
-          }) => rest,
-        );
+        const roomObj = room.toObject();
+        const { people, ...rest } = roomObj;
+        const cleanedPeople = people.map((p) => ({
+          _id: p._id,
+          firstName: p.firstName,
+          lastName: p.lastName,
+          balance: p.balance,
+          fcmToken: p.fcmToken,
+          username: p.username,
+          type: p.type,
+          price: p.price,
+          qualification: p.qualification,
+          consultantStatus: p.consultantStatus,
+        }));
 
         const miniNotifyData = {
           _id: notifyUser._id,
@@ -117,27 +114,29 @@ exports.callMeeting = async (req, res) => {
           consultantStatus: senderData.consultantStatus,
         };
 
+        const data = {
+          title:
+            senderData.firstName +
+            " " +
+            senderData.lastName +
+            " is calling you",
+          token: notifyUser.fcmToken,
+          body:
+            senderData.firstName +
+            " " +
+            senderData.lastName +
+            " is calling you",
+          type: "call",
+          status: "200",
+          room: JSON.stringify({ ...rest, people: cleanedPeople }),
+          meetingID,
+          roomID,
+          caller: JSON.stringify(miniSenderData),
+          callee: JSON.stringify(miniNotifyData),
+        };
+
         if (notifyUser.fcmToken) {
-          pushNotification({
-            title:
-              senderData.firstName +
-              " " +
-              senderData.lastName +
-              " is calling you",
-            token: notifyUser.fcmToken,
-            body:
-              senderData.firstName +
-              " " +
-              senderData.lastName +
-              " is calling you",
-            type: "call",
-            status: "200",
-            room: JSON.stringify({ ...rest, people: cleanedPeople }),
-            meetingID,
-            roomID,
-            caller: JSON.stringify(miniSenderData),
-            callee: JSON.stringify(miniNotifyData),
-          });
+          pushNotification(data);
         }
       }
     });
@@ -175,3 +174,39 @@ exports.closeMeeting = (req, res) => {
   store.onlineUsers.set(userID, { id: userID, status: "online" });
   res.status(200).json({ ok: true });
 };
+
+exports.getCustomCallData = async (req, res) => {
+  let { meetingID } = req.params;
+
+  if (!meetingID) {
+    return res.status(300).send({
+      message: "MeetingID required",
+    });
+  }
+
+  const meetingData = await Meeting.findById(meetingID);
+  const caller = await User.findById(meetingData.caller);
+
+  const room = await Room.findOne({
+    people: { $all: [meetingData.caller, req.user._id], $size: 2 },
+    isGroup: false,
+  }).populate({
+    path: "people",
+    select: "-email -password -friends -__v",
+    populate: { path: "picture" },
+  });
+
+  const data = {
+    status: 200,
+    meetingID,
+    roomID: room?._id,
+    room,
+    type: meetingData.type,
+    caller,
+    callee: req.user,
+  };
+
+  res.json(data);
+};
+
+// http://localhost:5173/callStatus?meetingID=69c6bca45881b3c87acc5a10&action=accept

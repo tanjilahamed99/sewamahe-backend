@@ -7,7 +7,10 @@ const WebsiteInfo = require("../models/WebsiteInfo");
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({}).select("-password");
+    const users = await User.find({
+      type: { $in: ["user", "Consultant"] },
+    }).select("-password");
+
     res.status(200).json(users);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -278,7 +281,7 @@ exports.creditUser = async (req, res) => {
           },
         },
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     res.send({
@@ -348,7 +351,7 @@ exports.allWithdrawalRequest = async (req, res) => {
     // Flatten all history arrays into a single array
     const allHistory = users.flatMap((user) => user.history);
     const filteredHistory = allHistory.filter(
-      (entry) => entry.historyType === "withdrawal"
+      (entry) => entry.historyType === "withdrawal",
     );
     res.send({
       message: "All user history retrieved successfully.",
@@ -377,7 +380,7 @@ exports.getSingleWithdrawal = async (req, res) => {
 
     // Find the specific withdrawal object from their history
     const withdrawal = user.history.find(
-      (item) => item._id.toString() === withdrawalId
+      (item) => item._id.toString() === withdrawalId,
     );
 
     if (!withdrawal) {
@@ -426,7 +429,7 @@ exports.updateWithdrawalStatus = async (req, res) => {
 
     // Find the specific withdrawal
     const withdrawalIndex = user.history.findIndex(
-      (item) => item._id.toString() === withdrawalId
+      (item) => item._id.toString() === withdrawalId,
     );
 
     if (withdrawalIndex === -1) {
