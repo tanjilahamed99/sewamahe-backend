@@ -3,8 +3,8 @@ const xss = require("xss");
 const Rooms = require("../models/Rooms");
 const store = require("../store");
 const { Types } = require("mongoose");
-const { pushNotification } = require("../utils/sendPushNotification");
 const User = require("../models/User");
+const { pushNotification } = require("../utils/sendPushNotification");
 
 // Send message
 exports.sendMessage = (req, res, next) => {
@@ -44,6 +44,7 @@ exports.sendMessage = (req, res, next) => {
                 store.io
                   .to(personUserID)
                   .emit("message-in", { status: 200, message, room });
+
                 if (authorID !== personUserID) {
                   const userData = await User.findById(personUserID);
                   const authorData = await User.findById(authorID);
