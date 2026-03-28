@@ -3,53 +3,124 @@ const store = require("./store");
 const User = require("./models/User");
 
 module.exports = () => {
+
+  // Initialize only if not already a Map (prevents reset on re-require)
+  if (!(store.onlineUsers instanceof Map)) {
     store.onlineUsers = new Map();
-    
-    store.io.use((socket, next) => {
-        const token = socket.handshake.auth?.token;
-        if (!token) {
-            return next(new Error("Authentication error: token required"));
-        }
+  }
+
+  // =========================
+  // AUTH MIDDLEWARE
+  // =========================
+  store.io.use((socket, next) => {
+    const token = socket.handshake.auth?.token;
+
+    if (!token) {
+      return next(new Error("Authentication error: token required"));
+    }
+
+    try {
+      const payload = jwt.verify(token, store.config.secret);
+
+      socket.user = payload;
+      socket.userId = payload.id;
+
+      next();
+    } catch (err) {
+      return next(new Error("Authentication error: invalid token"));
+    }
+  });
+
+  // =========================
+  // CONNECTION
+  // =========================
+  store.io.on("connection", (socket) => {
+
+    const userId = socket.userId;
+
+    console.log("User connected:", socket.user.email, socket.id);
+
+    // join personal room
+    socket.join(userId);
+
+    // Guard: only set if it doesn't exist OR if it's not a Set
+    if (!(store.onlineUsers.get(userId) instanceof Set)) {
+      store.onlineUsers.set(userId, new Set());
+    }
+
+    // add socket id
+    const userSockets = store.onlineUsers.get(userId);
+    userSockets.add(socket.id);
+
+    emitOnlineUsers();
+
+    // =========================
+    // EVENTS
+    // =========================
+
+    socket.on("typing", ({ room, userId, isTyping }) => {
+      socket.to(room).emit("userTyping", { room, userId, isTyping });
+    });
+
+    socket.on("joinRoom", (roomId) => {
+      socket.join(roomId);
+    });
+
+    // =========================
+    // DISCONNECT
+    // =========================
+
+    socket.on("disconnect", async () => {
+
+      const userId = socket.userId;
+
+      console.log("Socket disconnected:", socket.id);
+
+      const sockets = store.onlineUsers.get(userId);
+
+      // Guard: ensure it's actually a Set before calling .delete()
+      if (!sockets || !(sockets instanceof Set)) return;
+
+      // remove this socket
+      sockets.delete(socket.id);
+
+      // if user has no sockets left → offline
+      if (sockets.size === 0) {
+
+        store.onlineUsers.delete(userId);
+
         try {
-            const payload = jwt.verify(token, store.config.secret);
-            socket.user = payload;
-            next();
+
+          await User.findByIdAndUpdate(userId, {
+            lastOnline: new Date()
+          });
+
+          console.log("User fully offline:", userId);
+
         } catch (err) {
-            next(new Error("Authentication error: invalid token"));
+          console.error("Failed updating lastOnline:", err);
         }
+
+      }
+
+      emitOnlineUsers();
     });
 
-    store.io.on("connection", (socket) => {
-        console.log(`User connected: ${socket.user.email}`);
-        socket.join(socket.user.id);
-        
-        socket.on("typing", ({ room, userId, isTyping }) => {
-            socket.to(room).emit("userTyping", { room, userId, isTyping });
-        });
+  });
 
-        socket.on("joinRoom", (roomId) => {
-            socket.join(roomId);
-        });
+  // =========================
+  // EMIT ONLINE USERS
+  // =========================
 
-        store.onlineUsers.set(socket, { id: socket.user.id, status: "online" });
-        store.io.emit(
-            "onlineUsers",
-            Array.from(store.onlineUsers.values())
-        );
+  function emitOnlineUsers() {
 
-        socket.on("disconnect", () => {
-            console.log(`User disconnected: ${socket.user.email}`);
-            User.findOneAndUpdate(
-                { _id: socket.user.id },
-                { $set: { lastOnline: Date.now() } }
-            )
-                .then(() => console.log("last online " + socket.user.id))
-                .catch((err) => console.log(err));
-            store.onlineUsers.delete(socket);
-            store.io.emit(
-                "onlineUsers",
-                Array.from(store.onlineUsers.values())
-            );
-        });
-    });
-}
+    const formattedUsers = Array.from(store.onlineUsers.keys()).map((id) => ({
+      id,
+      status: "online"
+    }));
+
+    store.io.emit("onlineUsers", formattedUsers);
+
+  }
+
+};
